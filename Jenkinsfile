@@ -13,13 +13,13 @@ pipeline {
             steps {
                 echo 'Checking out source code from GitHub...'
                 checkout scm
-                // Fix for Groovy parsing error
+                // Fix for Groovy parsing error and shell $ variables
                 L: script {
-                    def gitInfo = sh(script: """
+                    def gitInfo = sh(script: '''
                         GIT_COMMIT_SHORT=$(git rev-parse --short HEAD)
                         GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
                         echo "$GIT_COMMIT_SHORT;$GIT_BRANCH"
-                    """, returnStdout: true).trim().split(';')
+                    ''', returnStdout: true).trim().split(';')
 
                     env.GIT_COMMIT_SHORT = gitInfo[0]
                     env.GIT_BRANCH = gitInfo[1]
