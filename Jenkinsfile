@@ -13,15 +13,16 @@ pipeline {
             steps {
                 echo 'Checking out source code from GitHub...'
                 checkout scm
-                script {
-                    env.GIT_COMMIT_SHORT = sh(
-                        script: 'git rev-parse --short HEAD',
-                        returnStdout: true
-                    ).trim()
-                    env.GIT_BRANCH = sh(
-                        script: 'git rev-parse --abbrev-ref HEAD',
-                        returnStdout: true
-                    ).trim()
+                // Fix for Groovy parsing error
+                L: script {
+                    def gitInfo = sh(script: """
+                        GIT_COMMIT_SHORT=$(git rev-parse --short HEAD)
+                        GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                        echo "$GIT_COMMIT_SHORT;$GIT_BRANCH"
+                    """, returnStdout: true).trim().split(';')
+
+                    env.GIT_COMMIT_SHORT = gitInfo[0]
+                    env.GIT_BRANCH = gitInfo[1]
                 }
                 echo "Building commit: ${env.GIT_COMMIT_SHORT} on branch: ${env.GIT_BRANCH}"
             }
@@ -103,15 +104,9 @@ pipeline {
         }
         success {
             echo 'Pipeline succeeded!'
-            script {
-                // Optional: Push Docker image to registry
-                // sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ghcr.io/your-username/sample-app:${DOCKER_TAG}"
-                // sh "docker push ghcr.io/your-username/sample-app:${DOCKER_TAG}"
-            }
         }
         failure {
             echo 'Pipeline failed!'
-            // Optional: Send GitHub/Slack notifications
         }
     }
 }
